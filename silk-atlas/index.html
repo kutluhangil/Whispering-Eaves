@@ -179,6 +179,50 @@ body.theme-night .dest-item { background: rgba(255,255,255,0.05); border-color: 
 body.theme-night .dest-item:hover, body.theme-night .dest-item.active { border-color: #E6A845; background: rgba(230,168,69,0.18); color: #FFF; }
 body.theme-night .custom-text-row input { background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.2); }
 
+/* Weather Selector Grid */
+.weather-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.weather-btn {
+  padding: 8px 4px; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: .12em;
+  border: 1px solid rgba(101,84,61,0.3); border-radius: 2px; background: transparent; cursor: pointer; color: inherit;
+  transition: all .18s ease; text-align: center;
+}
+.weather-btn:hover, .weather-btn.active { border-color: #A64A2A; background: rgba(166,74,42,0.12); font-weight: 600; }
+.theme-night .weather-btn:hover, .theme-night .weather-btn.active { border-color: #E6A845; background: rgba(230,168,69,0.18); color: #FFF; }
+
+/* Cultural Hotspots */
+#hotspotLayer { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+.hotspot {
+  position: absolute; pointer-events: auto; cursor: pointer; z-index: 20;
+  display: flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  transform: translate(-50%, -50%); transition: transform .2s ease;
+}
+.hotspot-dot {
+  width: 9px; height: 9px; background: #A64A2A; border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(166,74,42,0.3); transition: all .2s ease;
+}
+.theme-night .hotspot-dot { background: #E6A845; box-shadow: 0 0 0 3px rgba(230,168,69,0.3); }
+.hotspot:hover .hotspot-dot { transform: scale(1.4); background: #211A15; }
+.theme-night .hotspot:hover .hotspot-dot { background: #FFF; }
+.hotspot-pulse {
+  position: absolute; width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid #A64A2A; animation: hpulse 2s infinite; opacity: 0.6;
+}
+@keyframes hpulse { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
+
+/* Lore Scroll Modal */
+#loreModal .modal-card { width: 520px; text-align: left; }
+.lore-body { font-size: 14px; line-height: 1.65; font-family: Georgia, serif; color: #46392B; margin-top: 10px; }
+.theme-night .lore-body { color: #C5B8A5; }
+.lore-tag { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: .18em; color: #A64A2A; margin-bottom: 6px; }
+.theme-night .lore-tag { color: #E6A845; }
+
+/* Zen Mode Overrides */
+body.zen-active #hdr, body.zen-active #kicker, body.zen-active #title, body.zen-active #desc,
+body.zen-active #cardL, body.zen-active #cardR, body.zen-active #hint, body.zen-active #mswitch,
+body.zen-active #topControls > *:not(#zenToggle), body.zen-active #hotspotLayer {
+  opacity: 0 !important; pointer-events: none !important; transition: opacity .4s ease;
+}
+
 /* visible keyboard focus everywhere */
 .interactive:focus-visible, nav a:focus-visible, #configure:focus-visible, .ctrlBtn:focus-visible,
 .card:focus-visible, .door:focus-visible {
@@ -396,6 +440,9 @@ body.mobile #mswitch { display: flex; }
     <div id="destReadout"><span class="rnum" id="readNum">01</span><span class="rname" id="readName">CHINA</span></div>
   </header>
   <div id="topControls">
+    <button id="zenToggle" class="ctrlBtn interactive" aria-label="Toggle Zen Mode" title="Zen Mode (Keyboard: Z)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
     <button id="themeToggle" class="ctrlBtn interactive" aria-label="Toggle Night/Day Mode" title="Toggle Night/Day Mode">
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -406,6 +453,8 @@ body.mobile #mswitch { display: flex; }
     </button>
     <div id="configure" class="interactive" tabindex="0" role="button" aria-label="Route Index"><span class="rdot"></span><span>ROUTE INDEX</span></div>
   </div>
+
+  <div id="hotspotLayer"></div>
 
   <div id="kicker"></div>
   <div id="title"></div>
@@ -561,6 +610,8 @@ class AudioEngine {
 
 const audio = new AudioEngine();
 
+let weatherMode = 'spring';
+
 class FloatingParticle {
   constructor() { this.reset(true); }
   reset(init) {
@@ -568,46 +619,66 @@ class FloatingParticle {
     this.y = init ? Math.random() * H : -20;
     this.size = 2 + Math.random() * 4;
     this.vx = 0.3 + Math.random() * 0.7;
-    this.vy = 0.2 + Math.random() * 0.5;
+    this.vy = weatherMode === 'rain' ? 8 + Math.random() * 6 : 0.2 + Math.random() * 0.5;
     this.rot = Math.random() * TAU;
     this.vrot = (Math.random() - 0.5) * 0.03;
     this.opacity = 0.12 + Math.random() * 0.35;
-    this.type = Math.random() < 0.4 ? 'sakura' : Math.random() < 0.7 ? 'dust' : 'breeze';
   }
   update(dt, windForce) {
-    this.x += (this.vx + windForce * 1.4) * dt * 60;
+    const wx = weatherMode === 'rain' ? -2.5 : windForce * 1.4;
+    this.x += (this.vx + wx) * dt * 60;
     this.y += this.vy * dt * 60;
     this.rot += this.vrot * dt * 60;
-    if (this.x > W + 40 || this.y > H + 40) this.reset(false);
+    if (this.x > W + 40 || this.y > H + 40 || this.x < -40) this.reset(false);
   }
   draw(ctx, night) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
     ctx.globalAlpha = this.opacity;
-    if (this.type === 'sakura') {
+    if (weatherMode === 'spring') {
       ctx.fillStyle = night ? '#E8B4C8' : '#D9829C';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, this.size, this.size * 0.5, 0, 0, TAU);
-      ctx.fill();
-    } else if (this.type === 'dust') {
-      ctx.fillStyle = night ? '#F0D080' : '#8C6C40';
-      ctx.beginPath();
-      ctx.arc(0, 0, this.size * 0.6, 0, TAU);
-      ctx.fill();
-    } else {
-      ctx.strokeStyle = night ? 'rgba(230,210,170,0.2)' : 'rgba(120,90,60,0.15)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(-15, 0);
-      ctx.quadraticCurveTo(0, -4, 15, 0);
-      ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, this.size, this.size * 0.55, 0, 0, TAU); ctx.fill();
+    } else if (weatherMode === 'autumn') {
+      ctx.fillStyle = night ? '#E59866' : '#C0392B';
+      ctx.beginPath(); ctx.ellipse(0, 0, this.size * 1.2, this.size * 0.7, 0, 0, TAU); ctx.fill();
+    } else if (weatherMode === 'winter') {
+      ctx.fillStyle = night ? '#FFFFFF' : '#E5E8E8';
+      ctx.beginPath(); ctx.arc(0, 0, this.size * 0.7, 0, TAU); ctx.fill();
+    } else if (weatherMode === 'rain') {
+      ctx.strokeStyle = night ? 'rgba(174,214,241,0.45)' : 'rgba(93,173,226,0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-4, 14); ctx.stroke();
     }
     ctx.restore();
   }
 }
 
-const particles = Array.from({ length: 24 }, () => new FloatingParticle());
+const particles = Array.from({ length: 28 }, () => new FloatingParticle());
+
+/* Cultural Hotspots Data */
+const HOTSPOTS = {
+  china: [
+    { x: 740, y: 290, tag: 'DOUGONG BRACKETS (斗拱)', title: 'The Nail-less Timber Craft', story: 'Complex wooden brackets interlock to balance heavy golden roofs and withstand earthquakes without using a single metal nail.' },
+    { x: 1100, y: 250, tag: 'RIDGE BEASTS (吻兽)', title: 'Guardians of the Eave', story: 'Mythical ceramic creatures lining the roof ridge to ward off fires and evil spirits along the Silk Road.' }
+  ],
+  japan: [
+    { x: 700, y: 320, tag: 'VERMILION BEAMS (朱漆)', title: 'Shinto Vermilion & Cedar', story: 'Pure mercury-vermilion paint shields sacred wooden temple beams against moisture, rain, and ancient rot.' },
+    { x: 1150, y: 300, tag: 'HIP-AND-GABLE (入母屋造)', title: 'Irimoya-zukuri Harmony', story: 'Classic Japanese temple roof profile combining an upper gable with lower sweeping eaves.' }
+  ],
+  kazakhstan: [
+    { x: 924, y: 160, tag: 'SHANYRAK RING (Шаңырақ)', title: 'The Steppe Sky Wheel', story: 'The central wooden crown of the Kazakh yurt — an emblem of family heritage, home, and open sky.' },
+    { x: 720, y: 370, tag: 'WOVEN BANDS (Бау-бас)', title: 'Nomadic Felt Craftsmanship', story: 'Patterned felt bands hand-woven with ancient geometric tribal symbols securing the yurt structure against steppe winds.' }
+  ],
+  uzbekistan: [
+    { x: 924, y: 180, tag: 'VAULTED ARCH (Иван / Iwan)', title: 'Samarkand Registan Portal', story: 'Grand vaulted entryway adorned with brilliant turquoise and lapis lazuli glazed tiles, marking the heart of Silk Road scholarship.' },
+    { x: 670, y: 170, tag: 'MINARET DOME (Манора)', title: 'Azure Glazed Dome', story: 'Ribbed turquoise dome reflecting desert sunlight for over six centuries.' }
+  ],
+  turkiye: [
+    { x: 924, y: 175, tag: 'CRESCENT FINIAL (Alem)', title: 'Ottoman Lead Dome & Alem', story: 'Lead-clad Ottoman dome topped with a hand-carved golden crescent finial over the Bosphorus.' },
+    { x: 720, y: 325, tag: 'ELI-BÖĞRÜNDE STRUTS', title: 'Wooden Mansion Brackets', story: 'Traditional wooden cantilever brackets supporting projecting upper floors (cumba) of Ottoman Bosphorus mansions.' }
+  ]
+};
 
 let nightMode = false;
 
@@ -2491,8 +2562,8 @@ function applyCopy(key) {
   // mobile bottom switcher + nav active states
   updateMswitch(key);
   setNavActive('home');
-  // NOTE: #hint is a single persistent element. Its text is only changed on
-  // gallery enter/leave — never rewritten per scene (avoids stale overlays).
+  updateHotspots(key);
+  audio.playAmbientNote(key);
 }
 
 /* ---------- mobile bottom destination switcher (screen-space DOM) ---------- */
@@ -2886,7 +2957,8 @@ window.addEventListener('keydown', e => {
 
 /* ---------- boot ---------- */
 function boot() {
-  ROOF_ENTRIES = { china: roofEntry('china'), japan: roofEntry('japan'), kazakhstan: roofEntry('kazakhstan') };
+  ROOF_ENTRIES = {};
+  ORDER.forEach(k => ROOF_ENTRIES[k] = roofEntry(k));
   resize();
   const h = (location.hash || '').replace('#', '');
   if (h === 'gallery') {
@@ -2911,6 +2983,132 @@ function boot() {
     setTimeout(() => domFadeIn(false), 80);
   }
 }
+
+/* ---------- Hotspots, Export & Zen Handlers ---------- */
+const hotspotLayer = document.getElementById('hotspotLayer');
+const loreModal = document.getElementById('loreModal');
+const loreTitle = document.getElementById('loreTitle');
+const loreTag = document.getElementById('loreTag');
+const loreBody = document.getElementById('loreBody');
+const loreClose = document.getElementById('loreClose');
+
+function updateHotspots(key) {
+  if (!hotspotLayer) return;
+  hotspotLayer.innerHTML = '';
+  if (mode === 'gallery') return;
+  const list = HOTSPOTS[key] || [];
+  list.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'hotspot';
+    el.style.left = h.x + 'px';
+    el.style.top = h.y + 'px';
+    el.innerHTML = '<div class="hotspot-dot"></div><div class="hotspot-pulse"></div>';
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      openLore(h);
+    });
+    hotspotLayer.appendChild(el);
+  });
+}
+
+function openLore(h) {
+  if (!loreModal) return;
+  loreTitle.textContent = h.title;
+  loreTag.textContent = h.tag;
+  loreBody.textContent = h.story;
+  loreModal.classList.add('open');
+  loreModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeLore() {
+  if (!loreModal) return;
+  loreModal.classList.remove('open');
+  loreModal.setAttribute('aria-hidden', 'true');
+}
+
+if (loreClose) loreClose.addEventListener('click', closeLore);
+if (loreModal) {
+  loreModal.addEventListener('click', e => {
+    if (e.target === loreModal) closeLore();
+  });
+}
+
+/* Export Editorial Poster */
+function exportPoster() {
+  closeModal();
+  const pCv = document.createElement('canvas');
+  pCv.width = W; pCv.height = H;
+  const pCtx = pCv.getContext('2d');
+
+  if (bgCanvas) {
+    pCtx.drawImage(bgCanvas, 0, 0, bgCanvas.width, bgCanvas.height, 0, 0, W, H);
+  } else {
+    pCtx.fillStyle = nightMode ? '#141722' : '#E8DECB';
+    pCtx.fillRect(0, 0, W, H);
+  }
+
+  if (curCurtain) {
+    if (curShadow) drawCurtainShadow(curShadow, curCurtain, 0, 0, 1);
+    curCurtain.draw(pCtx, 0, 0, 1);
+    const rd = roofDisplay(curKey);
+    if (rd) {
+      const re = ROOF_ENTRIES[curKey];
+      pCtx.drawImage(re.canvas, re.px, re.py, re.w, re.h);
+    }
+  }
+
+  particles.forEach(p => p.draw(pCtx, nightMode));
+
+  const s = SCENES[curKey];
+  pCtx.fillStyle = nightMode ? '#E6A845' : '#A64A2A';
+  pCtx.font = '12px ui-monospace, monospace';
+  pCtx.fillText('WHISPERING EAVES · ' + s.num + ' ' + s.name, 100, 70);
+
+  pCtx.fillStyle = nightMode ? '#C5B8A5' : '#65543D';
+  pCtx.fillText(s.kicker, 100, 500);
+
+  pCtx.fillStyle = nightMode ? '#FFFFFF' : '#211A15';
+  pCtx.font = '500 56px Didot, Didone, Georgia, serif';
+  let yPos = 550;
+  s.title.forEach(line => {
+    pCtx.fillText(line, 100, yPos);
+    yPos += 58;
+  });
+
+  const link = document.createElement('a');
+  link.download = 'whispering_eaves_' + curKey + '_poster.png';
+  link.href = pCv.toDataURL('image/png');
+  link.click();
+}
+
+const expBtn = document.getElementById('exportPosterBtn');
+if (expBtn) expBtn.addEventListener('click', exportPoster);
+
+/* Zen Mode */
+let zenActive = false;
+function toggleZen() {
+  zenActive = !zenActive;
+  document.body.classList.toggle('zen-active', zenActive);
+}
+
+const zenBtn = document.getElementById('zenToggle');
+if (zenBtn) zenBtn.addEventListener('click', toggleZen);
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'z' || e.key === 'Z') {
+    if (document.activeElement.tagName !== 'INPUT') toggleZen();
+  }
+});
+
+/* Weather selector buttons */
+document.querySelectorAll('.weather-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    weatherMode = btn.dataset.weather;
+    particles.forEach(p => p.reset(true));
+  });
+});
 
 /* ============================================================
    9. Input, custom cursor, auto-demo ghost, main loop
@@ -3180,6 +3378,15 @@ preloadRoofs().then(() => {
           <button id="burstCurtainBtn" class="btn-secondary interactive">Burst Curtain</button>
         </div>
       </div>
+      <div class="modal-section">
+        <h3>WEATHER & ATMOSPHERE</h3>
+        <div class="weather-grid">
+          <button class="weather-btn interactive active" data-weather="spring">🌸 Spring</button>
+          <button class="weather-btn interactive" data-weather="autumn">🍁 Autumn</button>
+          <button class="weather-btn interactive" data-weather="winter">❄️ Winter</button>
+          <button class="weather-btn interactive" data-weather="rain">🌧️ Rain</button>
+        </div>
+      </div>
       <div class="modal-section row-split">
         <div>
           <h3>THEME MODE</h3>
@@ -3190,6 +3397,23 @@ preloadRoofs().then(() => {
           <button id="modalAudioToggle" class="btn-secondary interactive">Enable Sound</button>
         </div>
       </div>
+      <div class="modal-section" style="margin-bottom:0;">
+        <h3>EDITORIAL POSTER EXPORT</h3>
+        <button id="exportPosterBtn" class="btn-primary interactive" style="width:100%;">📸 Export Editorial Poster (PNG)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loreModal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="loreTitle">CULTURAL INSIGHT</h2>
+      <button id="loreClose" class="interactive" aria-label="Close lore">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="lore-tag" id="loreTag">ARCHITECTURAL LORE</div>
+      <div class="lore-body" id="loreBody"></div>
     </div>
   </div>
 </div>
