@@ -464,6 +464,14 @@ body.mobile #mswitch { display: flex; }
     <div id="destReadout"><span class="rnum" id="readNum">01</span><span class="rname" id="readName">CHINA</span></div>
   </header>
   <div id="topControls">
+    <select id="langSelect" class="interactive" aria-label="Select Language" title="Select UI Language" style="background:transparent; border:1px solid rgba(101,84,61,0.3); font-family:ui-monospace,monospace; font-size:11px; color:inherit; padding:4px 6px; border-radius:3px; cursor:pointer;">
+      <option value="en">EN</option>
+      <option value="tr">TR</option>
+      <option value="zh">ZH</option>
+      <option value="ja">JA</option>
+      <option value="kk">KK</option>
+      <option value="uz">UZ</option>
+    </select>
     <button id="mapToggle" class="ctrlBtn interactive" aria-label="Silk Road Map" title="Silk Road Interactive Map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     </button>
@@ -2578,9 +2586,10 @@ function fillCard(imgEl, numEl, capEl, subEl, key) {
 /* ---------- copy application ---------- */
 function applyCopy(key) {
   const s = SCENES[key];
-  elKicker.textContent = s.kicker;
-  elTitle.innerHTML = s.title.join('<br>');
-  elDesc.textContent = s.desc;
+  const lData = (LANG_DATA[curLang] && LANG_DATA[curLang][key]) ? LANG_DATA[curLang][key] : s;
+  elKicker.textContent = lData.kicker;
+  elTitle.innerHTML = lData.title.join('<br>');
+  elDesc.textContent = lData.desc;
   const i = ORDER.indexOf(key);
   const prev = ORDER[(i + ORDER.length - 1) % ORDER.length];
   const next = ORDER[(i + 1) % ORDER.length];
@@ -3248,6 +3257,114 @@ window.addEventListener('keydown', e => {
   }
 });
 
+/* ---------- Multi-Language Engine (EN, TR, ZH, JA, KK, UZ) ---------- */
+const LANG_DATA = {
+  en: {
+    home: 'Home', dests: 'Destinations', routeIdx: 'ROUTE INDEX',
+    china: { kicker: 'PART 01 — THE START OF SILK ROAD', title: ['ANCIENT PALACE', 'EAVES OF XI’AN'], desc: 'Timber Dougong brackets balancing golden tiled roofs above Chang’an.' },
+    japan: { kicker: 'PART 02 — SHINTO VERMILION', title: ['NARA TEMPLE', 'CEDAR SHINGLES'], desc: 'Irimoya hip-and-gable architecture shielded with mercury-vermilion lacquer.' },
+    kazakhstan: { kicker: 'PART 03 — NOMADIC STEPPE', title: ['ALTAY FELT YURT', 'SHANYRAK CROWN'], desc: 'Central sky wheel uniting steppe family heritage under open blue skies.' },
+    uzbekistan: { kicker: 'PART 04 — HEART OF REGISTAN', title: ['SAMARKAND AZURE', 'GLAZED TILES'], desc: 'Grand vaulted iwan portal embellished with lapis lazuli glazed mosaics.' },
+    turkiye: { kicker: 'PART 05 — BOSPHORUS CROSSROADS', title: ['ISTANBUL OTTOMAN', 'MANSION DOME'], desc: 'Wooden cantilever struts supporting Bosphorus mansions beneath golden alem domes.' }
+  },
+  tr: {
+    home: 'Ana Sayfa', dests: 'Rotalar', routeIdx: 'ROTA İNDEKSİ',
+    china: { kicker: 'BÖLÜM 01 — İPEK YOLUNUN BAŞLANGICI', title: ['Şİ’AN SARAYI', 'SAÇAKLARI'], desc: 'Çang’an üzerinde altın kiremitli çatıları dengeleyen ahşap Dougong braketleri.' },
+    japan: { kicker: 'BÖLÜM 02 — ŞİNTO ZİNCİRİ', title: ['NARA TAPINAĞI', 'SEDİR ÇATILARI'], desc: 'Cıva verniği ile korunan İrimoya çatı mimarisi.' },
+    kazakhstan: { kicker: 'BÖLÜM 03 — GÖÇEBE BOZKIR', title: ['ALTAY KEÇE ÇADIRI', 'ŞANIRAK TACI'], desc: 'Açık mavi gökyüzü altında aile mirasını birleştiren ahşap gökyüzü çemberi.' },
+    uzbekistan: { kicker: 'BÖLÜM 04 — REGİSTANIN KALBİ', title: ['SEMERKAND TURKUAZ', 'ÇİNİ KUBBELERİ'], desc: 'Lacivert çini mozaiklerle süslenmiş görkemli tonozlu eyvan portalı.' },
+    turkiye: { kicker: 'BÖLÜM 05 — BOĞAZİÇİ KAVŞAĞI', title: ['İSTANBUL OSMANLI', 'YALI KUBBESİ'], desc: 'Altın alem kubbeleri altında Boğaziçi yalılarını destekleyen ahşap eliböğründe payandaları.' }
+  },
+  zh: {
+    home: '首页', dests: '目的地', routeIdx: '路线索引',
+    china: { kicker: '第一部分 — 丝绸之路的起点', title: ['西安古宫', '飞檐斗拱'], desc: '长安城上空以木斗拱平衡金瓦屋顶的古老建筑工艺。' },
+    japan: { kicker: '第二部分 — 神道朱漆', title: ['奈良古刹', '入母屋造'], desc: '以朱砂漆保护的木造入母屋造神道神社屋顶。' },
+    kazakhstan: { kicker: '第三部分 — 游牧草原', title: ['阿尔泰毡房', '香尼拉克冠'], desc: '湛蓝天空下象征家庭传承与团结的木制天窗木轮。' },
+    uzbekistan: { kicker: '第四部分 — 雷吉斯坦之心', title: ['撒马尔罕', '青金琉璃拱门'], desc: '饰有青金石琉璃马赛克的壮丽拱门门道。' },
+    turkiye: { kicker: '第五部分 — 博斯普鲁斯交汇处', title: ['伊斯坦布尔', '奥斯曼邸宅'], desc: '金月徽穹顶下支撑博斯普鲁斯海峡木造大宅的悬臂支柱。' }
+  },
+  ja: {
+    home: 'ホーム', dests: '目的地', routeIdx: 'ルートインデックス',
+    china: { kicker: 'パート 01 — シルクロードの起点', title: ['西安古宮', '組物の庇'], desc: '長安の空に金瓦屋根を支える伝統的な斗拱木工技術。' },
+    japan: { kicker: 'パート 02 — 神道朱漆の美', title: ['奈良古刹', '入母屋造り'], desc: '朱漆で護られた伝統的な入母屋造り神社建築。' },
+    kazakhstan: { kicker: 'パート 03 — 遊牧民の草原', title: ['アルタイゲル', 'シャニラク天窓'], desc: '青空の下で家族の伝統をひとつにする木製天窓。' },
+    uzbekistan: { kicker: 'パート 04 — レギスタンの心臓', title: ['サマルカンド', '青のタイル'], desc: 'ラピスラズリのモザイクタイルで飾られた壮大なアーチ。' },
+    turkiye: { kicker: 'パート 05 — ボスポラスの交差点', title: ['イスタンブール', 'オスマン邸宅'], desc: '金のアレムドームの下で邸宅を支える木製肘木構造。' }
+  },
+  kk: {
+    home: 'Басты', dests: 'Бағыттар', routeIdx: 'БАҒЫТ ИНДЕКСІ',
+    china: { kicker: '01 БӨЛІМ — ЖІБЕК ЖОЛЫНЫҢ БАСТАУЫ', title: ['СИАН САРЙЫ', 'ШАТЫРЛАРЫ'], desc: 'Қытайдың алтын шатырларын теңестіретін ағаш доугун кронштейндері.' },
+    japan: { kicker: '02 БӨЛІМ — ШИНТО ҚЫЗЫЛ СЫРЫ', title: ['НАРА ТҮБЕГІ', 'ИРИМОЯ ШАТЫРЫ'], desc: 'Сынapлы қызыл сырмен қорғалған Иримоя ғибадатхана архитектурасы.' },
+    kazakhstan: { kicker: '03 БӨЛІМ — КӨШПЕНДІЛЕР ДАЛАСЫ', title: ['АЛТАЙ КИІЗ ҮЙІ', 'ШАҢЫРАҚ ТАЖЫ'], desc: 'Ашық аспан астында отбасы мұрасын біріктіретін киелі шаңырақ.' },
+    uzbekistan: { kicker: '04 БӨЛІМ — РЕГИСТАН ЮРЕГІ', title: ['САМАРҚАНД', 'КӨК ПЛИТАЛАРЫ'], desc: 'Лазурит плиткаларымен безендірілген ғажайып Регистан порталы.' },
+    turkiye: { kicker: '05 БӨЛІМ — БОСФОР ТҮЙІСІ', title: ['ИСТАМБҰЛ', 'ОСМАН ҮЙЛЕРІ'], desc: 'Алтын ай күмбездерінің астындағы Босфор үйлерін ұстайтын ағаш тіреулер.' }
+  },
+  uz: {
+    home: 'Bosh sahifa', dests: 'Yo‘nalishlar', routeIdx: 'YO‘NALISH INDEKSI',
+    china: { kicker: '01-QISM — ISSIQ YO‘LNING BOSHLANISHI', title: ['SI’AN SAROYI', 'TAMLARI'], desc: 'Oltin koshinli tom shakllarini muvozanatlashtiruvchi yog‘och braketlar.' },
+    japan: { kicker: '02-QISM — SHINTO QIZIL BO‘YOG‘I', title: ['NARA IBO DATXONASI', 'IRIMOYA TAMI'], desc: 'Qizil bo‘yoq bilan himoyalangan yapon ibodatxona me’morchiligi.' },
+    kazakhstan: { kicker: '03-QISM — KO‘CHMANCHI DASHT', title: ['OLTAY O‘TOV', 'SHANIRAQ TOCI'], desc: 'Ochiq osmon ostida oila merosini birlashtiruvchi yog‘och shanyraq.' },
+    uzbekistan: { kicker: '04-QISM — REGISTON YURAGI', title: ['SAMARQAND', 'TURKUAZ KOSHINLARI'], desc: 'Lapis lazuli koshinlari bilan bezatilgan muhtasham peshtoq.' },
+    turkiye: { kicker: '05-QISM — BOSFOR CHORRAHASI', title: ['ISTANBUL OSMONLI', 'HOVLI KUMBATLARI'], desc: 'Oltin yarim oy gumbazlari ostidagi Bosfor uylarini ushlab turuvchi yog‘och ustunlar.' }
+  }
+};
+let curLang = 'en';
+
+function changeLanguage(lang) {
+  curLang = lang;
+  const d = LANG_DATA[lang] || LANG_DATA.en;
+  const navH = document.getElementById('navHome');
+  const navD = document.getElementById('navDest');
+  const cfg = document.getElementById('configure');
+  if (navH) navH.textContent = d.home;
+  if (navD) navD.textContent = d.dests;
+  if (cfg && cfg.querySelector('span:last-child')) cfg.querySelector('span:last-child').textContent = d.routeIdx;
+  applyCopy(curKey);
+}
+
+const langSelect = document.getElementById('langSelect');
+if (langSelect) {
+  langSelect.addEventListener('change', e => changeLanguage(e.target.value));
+}
+
+/* ---------- Live Audio Equalizer Spectrum Visualizer ---------- */
+function drawAudioEqualizer(cCtx) {
+  cCtx.save();
+  cCtx.translate(W / 2 - 120, H - 35);
+  cCtx.globalAlpha = 0.55;
+
+  const numBars = 24;
+  const barW = 6;
+  const gap = 4;
+  const now = performance.now() * 0.005;
+
+  for (let i = 0; i < numBars; i++) {
+    const h = audio.muted ? 3 : Math.abs(Math.sin(now + i * 0.45) * 22 + Math.cos(now * 1.8 + i * 0.25) * 14 + 6);
+    cCtx.fillStyle = nightMode ? '#E6A845' : '#A64A2A';
+    cCtx.fillRect(i * (barW + gap), -h, barW, h);
+  }
+  cCtx.restore();
+}
+
+/* ---------- Velocity-Based Wind Gust Gesture Engine ---------- */
+let lastPX = CX, lastPY = H * 0.55, lastPTime = performance.now();
+window.addEventListener('pointermove', e => {
+  const now = performance.now();
+  const dtP = (now - lastPTime) / 1000;
+  if (dtP > 0.015) {
+    const d = toDesign(e.clientX, e.clientY);
+    const vx = (d.x - lastPX) / dtP;
+    const vy = (d.y - lastPY) / dtP;
+    const speed = Math.sqrt(vx * vx + vy * vy);
+
+    if (speed > 1100 && curCurtain) {
+      curCurtain.burst(d.x, d.y, Math.min(3.5, speed / 550));
+      windForce += (vx > 0 ? 1 : -1) * 0.9;
+    }
+    lastPX = d.x; lastPY = d.y; lastPTime = now;
+  }
+}, { passive: true });
+
 /* Export Editorial Poster */
 function exportPoster() {
   closeModal();
@@ -3477,8 +3594,9 @@ function render(dt) {
   ctx.setTransform(dpr * scale, 0, 0, dpr * scale, ox * dpr, oy * dpr);
   prof('paper', t0);
 
-  // Floating ambient particles
+  // Floating ambient particles & audio equalizer
   particles.forEach(p => p.draw(ctx, nightMode));
+  drawAudioEqualizer(ctx);
 
   t0 = performance.now();
   if (gallery) {
