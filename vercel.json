@@ -1,0 +1,9 @@
+{
+  "name": "whispering-eaves",
+  "alias": ["whispering-eaves"],
+  "outputDirectory": "silk-atlas",
+  "buildCommand": null,
+  "devCommand": null,
+  "installCommand": null,
+  "framework": null
+}
