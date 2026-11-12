@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/hero.svg" alt="Whispering Eaves — an interactive web artwork of text curtains along the Silk Road" width="100%">
+<img src="docs/media/hero.svg" alt="Whispering Eaves — a curtain of glyphs hanging from a palace eave, swinging like cloth after a swipe" width="100%">
 
 <p>
   <a href="https://whispering-eaves.vercel.app/"><img alt="Live demo" src="https://img.shields.io/badge/live%20demo-enter%20the%20exhibition-e0533f?style=for-the-badge&labelColor=120d0b"></a>
@@ -68,6 +68,50 @@ It is written in plain HTML5 Canvas, CSS and the Web Audio API: no build step, n
 
 <img src="docs/media/divider.svg" width="100%" alt="">
 
+## How the cloth moves
+
+Every curtain is a grid of point masses: 25 to 27 chains of 40 points, each chain pinned under the eave, each point carrying one glyph. The simulation runs every frame with the time step capped at 1/30 s:
+
+| Step | What happens |
+|---|---|
+| **1 · Integrate** | Verlet: velocity is the last move times a damping of 0.982, plus gravity of 1500 px/s² in design space. |
+| **2 · Pointer** | Only while the pointer is actually moving (above 30 px/s): points within a 165 px radius are pushed by the smoothed pointer velocity, clamped to 2400 px/s. Resting a finger does nothing. |
+| **3 · Constraints ×4** | Vertical neighbours are projected back to their rest length at full stiffness; weak horizontal shear springs (0.045) keep strands loosely together without turning the curtain into a sheet. |
+| **4 · Breeze** | A barely perceptible idle sway, held off for the first two seconds after a scene arrives. |
+| **5 · Clamp** | Point speed is capped at 1100 px/s so a hard flick cannot explode the grid. |
+
+Each glyph is drawn from a sprite atlas rendered once per scene at 3× and rotated to follow the line between its neighbours, so the characters lean as the strand bends. There is no `fillText` per frame.
+
+<table>
+  <tr>
+    <td width="33%"><img src="shots/02_swipe_mid.png" alt="Mid-swipe: strands parting"></td>
+    <td width="33%"><img src="shots/04_swipe_after_2s.png" alt="Two seconds later: the curtain swinging back"></td>
+    <td width="33%"><img src="shots/06_trans_empty_beat.png" alt="The empty paper beat between scenes"></td>
+  </tr>
+  <tr>
+    <td align="center">mid-swipe</td>
+    <td align="center">+2 s · swinging back</td>
+    <td align="center">the empty beat between stops</td>
+  </tr>
+</table>
+
+<img src="docs/media/divider.svg" width="100%" alt="">
+
+## Between destinations
+
+A scene change is a small piece of choreography: the building slides out (0.38 s), the paper is left empty for a 400 ms beat, then the next building slides in with a slight overshoot and its curtain starts perfectly still. Text swaps while it is invisible, the URL hash updates so every stop is linkable, and the curtain ignores input until it has arrived. Only the active curtain is simulated; a leaving one keeps rendering with physics frozen and is released once it fades out.
+
+| Detail | Choice |
+|---|---|
+| Frame loop | `requestAnimationFrame` with a clamped real `dt`; pauses when the tab is hidden |
+| Resolution | Device pixel ratio capped at 2 |
+| Shadows | Recomposited only when something moved; otherwise the last frame is reused |
+| Input | Pointer Events with `touch-action: none`; one tracked pointer, mouse and touch alike |
+| Idle | After 9 s without input, a soft invisible hand sweeps the curtain every ~7 s; any real touch cancels it |
+| Accessibility | `prefers-reduced-motion` turns off the breeze and the demo sweep |
+
+<img src="docs/media/divider.svg" width="100%" alt="">
+
 ## Türkçe özet
 
 **Fısıldayan Saçaklar (Whispering Eaves)**, tarihi saçaklardan sarkan yazı perdelerini gerçek kumaş fiziğiyle hareket ettiren, tam ekran bir web sanat eseri. İpek Yolu boyunca beş durak var: Şian, Nara, Altay, Semerkant ve İstanbul. Her durağın kendi mimarisi, yazısı ve pentatonik müziği var. Perdeyi kaydırınca harfler dağılıp esnek biçimde geri toplanıyor. Kendi metninle perde örebilir, klavyeyle nota çalabilir, sahneyi poster olarak indirebilirsin. Derleme adımı ya da kütüphane yok; tek bir HTML dosyası.
@@ -91,5 +135,5 @@ shots/           screenshots from the test runs
 <div align="center">
 <br>
 <a href="https://github.com/kutluhangil"><img src="docs/media/signature.svg" width="100%" alt="Built by kutluhangil"></a>
-<sub>Five cultures, one curtain · every poem, motif and melody written for this piece.</sub>
+<sub>Five cultures, one curtain · every poem, motif and melody written for this piece · the banner is an illustration of the curtain.</sub>
 </div>
